@@ -133,7 +133,7 @@ void network_prepare(void)
         /* DHCP is started, so stop it and restart after changing settings. */
         esp_netif_dhcps_stop(mainnetif);
       }
-      ESP_ERROR_CHECK(esp_netif_set_hostname(mainnetif, "foxtemp"));
+      ESP_ERROR_CHECK(esp_netif_set_hostname(mainnetif, "regenamp"));
       esp_netif_ip_info_t ipi;
       esp_netif_set_ip4_addr(&ipi.ip,10,5,5,1);
       esp_netif_set_ip4_addr(&ipi.gw,10,5,5,1);

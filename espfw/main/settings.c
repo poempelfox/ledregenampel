@@ -39,7 +39,7 @@ void settings_load(void)
     esp_read_mac(mainmac, ESP_MAC_WIFI_STA);
   }
   memset(&settings, 0x00, sizeof(settings));
-  sprintf(settings.wifi_ap_ssid, "foxtemp%02x%02x%02x%02x%02x%02x",
+  sprintf(settings.wifi_ap_ssid, "regenampel%02x%02x%02x%02x%02x%02x",
           mainmac[0], mainmac[1], mainmac[2],
           mainmac[3], mainmac[4], mainmac[5]);
   strcpy(settings.adminpw, "admin");
