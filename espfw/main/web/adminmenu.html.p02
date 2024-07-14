@@ -1,0 +1,90 @@
+<form action="adminaction" method="POST">
+<input type="hidden" name="action" value="flashupdate">
+URL for firmware Update:<br>
+<input type="text" name="updateurl" value="https://www.poempelfox.de/espfw/ledregenampel.bin"><br>
+BE PATIENT after clicking "Flash Firmware Update", do not click it twice -
+it will take at least 30 seconds before the webserver will show
+any sort of reply.<br>
+<input type="submit" name="su" value="Flash Firmware Update"><br>
+</form><br>
+<form action="adminaction" method="POST">
+<input type="hidden" name="action" value="reboot">
+<input type="submit" name="su" value="Reboot Microcontroller"><br>
+</form><br>
+
+<script type="text/javascript">
+var hideto = null;
+function hidesetresagain() {
+  document.getElementById("settingsresult").style.display = "none";
+  hideto = null;
+}
+function submitsettings(e) {
+  e.preventDefault();
+  const XHR = new XMLHttpRequest();
+  const FD = new FormData(e.srcElement);
+  // Define what happens on successful data submission
+  XHR.addEventListener("load", (event) => {
+    var sr = document.getElementById("settingsresult");
+    if (event.target.responseText.startsWith("OK")) {
+      sr.style.color = "#111111";
+      sr.style.backgroundColor = "#00aa00";
+    } else {
+      sr.style.color = "#aaaa00";
+      sr.style.backgroundColor = "#660000";
+    }
+    var newstatus = "Server replied:<br>";
+    newstatus += event.target.responseText;
+    newstatus += "<br>Please note that changed settings will only take effect after a reboot.";
+    sr.innerHTML = newstatus;
+    sr.style.display = "block";
+    if (hideto !== null) { clearTimeout(hideto); }
+    hideto = setTimeout(hidesetresagain, 10000);
+  });
+  // Define what happens in case of error
+  XHR.addEventListener("error", (event) => {
+    var sr = document.getElementById("settingsresult");
+    sr.style.color = "#aaaa00";
+    sr.style.backgroundColor = "#660000";
+    sr.innerHTML = "There was an error saving those settings.";
+    sr.style.display = "block";
+    if (hideto !== null) { clearTimeout(hideto); }
+    hideto = setTimeout(hidesetresagain, 10000);
+  });
+  XHR.open("POST", "savesettings");
+  XHR.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+  XHR.send(new URLSearchParams(FD));
+}
+function togset(e, s) {
+  const XHR = new XMLHttpRequest();
+  var dge = document.getElementById(s);
+  var oldtxt = e.srcElement.innerHTML;
+  if (dge.style.display === "block") {
+    dge.style.display = "none";
+    dge.innerHTML = "Loading...";
+    e.srcElement.innerHTML = "&#9656;" + oldtxt.substring(1);
+    return;
+  }
+  dge.style.display = "block";
+  e.srcElement.innerHTML = "&#9660;" + oldtxt.substring(1);
+  XHR.addEventListener("load", (event) => {
+    var sr = document.getElementById(s);
+    sr.innerHTML = event.target.responseText;
+  });
+  // Define what happens in case of error
+  XHR.addEventListener("error", (event) => {
+    var sr = document.getElementById(s);
+    sr.innerHTML = "There was an error loading those settings from the server.";
+  });
+  XHR.open("GET", "adminmenu.html?sp=" + s);
+  XHR.send();
+}
+</script>
+<h3>Settings<h3>
+<div id="settingsresult"></div>
+<h4 onclick="togset(event, 'setwifi');">&#9656; WiFi</h4>
+<div id="setwifi" style="display:none;">Loading... (note: this requires Javascript!)</div>
+<h4 onclick="togset(event, 'setmisc');">&#9656; Miscellaneous</h4>
+<div id="setmisc" style="display:none;">Loading... (note: this requires Javascript!)</div>
+<!-- more settings to come -->
+</body></html>
+
