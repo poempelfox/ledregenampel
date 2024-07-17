@@ -35,12 +35,13 @@ haengen kann.
 * Der ESP32-C3 steuert die LEDs ueber je einen MOSFET pro Farbe
   mit einem dedizierten I/O-Pin pro Farbe. Das OLED wird ueber I2C
   angesprochen.
-* momentaner Status: ist bestellt, aber noch nicht geliefert.
+* momentaner Status: Hardware wurde geliefert und funktioniert zumindest
+  teilweise.
 
 
 ## Firmware
 
-* existiert noch nicht
+* ist in Arbeit (derzeit hauptsaechlich eine Kopie der foxesptemp-firmware)
 * geplant ist ein Webinterface auf dem ESP, ueber das man den
   angezeigten Ort (bzw. Weg) einstellen kann.
 
