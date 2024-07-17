@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 
-<html><head><title>FoxESPTemp - Admin menu</title>
+<html><head><title>LED-Regen-Ampel - Admin menu</title>
 <link rel="stylesheet" href="css.css">
 </head><body>
-<h1>FoxESPTemp - Admin menu</h1>
+<h1>LED-Regen-Ampel - Admin menu</h1>
 XXXXXXXXXX
 <h3>Admin-Actions:</h3>
 XXXXXXXXXX
@@ -87,11 +87,18 @@ function togset(e, s) {
   XHR.open("GET", "adminmenu.html?sp=" + s);
   XHR.send();
 }
+function updslider(n) {
+  var dge1 = document.getElementById(n);
+  var dge2 = document.getElementById("slf" + n);
+  dge1.value = dge2.value;
+}
 </script>
-<h3>Settings<h3>
+<h3>Settings</h3>
 <div id="settingsresult"></div>
 <h4 onclick="togset(event, 'setwifi');">&#9656; WiFi</h4>
 <div id="setwifi" style="display:none;">Loading... (note: this requires Javascript!)</div>
+<h4 onclick="togset(event, 'setleds');">&#9656; LEDs</h4>
+<div id="setleds" style="display:none;">Loading... (note: this requires Javascript!)</div>
 <h4 onclick="togset(event, 'setmisc');">&#9656; Miscellaneous</h4>
 <div id="setmisc" style="display:none;">Loading... (note: this requires Javascript!)</div>
 <!-- more settings to come -->

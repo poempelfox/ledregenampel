@@ -457,6 +457,24 @@ esp_err_t get_adminmenu_handler(httpd_req_t * req) {
     pfp += sprintf(pfp, "<td><input type=\"text\" name=\"wifi_cl_pw\" id=\"wifi_cl_pw\" value=\"%s\"></td></tr>", tmp1);
     strcat(pfp, "<tr><th colspan=\"2\"><input type=\"submit\" name=\"su\" value=\"Set\"></th></tr>");
     strcat(pfp, "</table></form><br>");
+  } else if (strcmp(subpage, "setleds") == 0) { /* LED settings */
+    strcpy(myresponse, "<form action=\"savesettings\" method=\"POST\" onsubmit=\"submitsettings(event)\">");
+    strcat(myresponse, "<table>");
+    for (int l = 0; l <= 2; l++) {
+      const uint8_t * colors[3] = { "Red", "Yellow", "Green" };
+      pfp = myresponse + strlen(myresponse);
+      pfp += sprintf(pfp, "<tr><th>%s LED brightness</th><td>", colors[l]);
+      /* This is adjustable on the fly. So we don't reed the setting
+       * from flash, but the currently active one. */
+      pfp += sprintf(pfp, "<input type=\"range\" min=\"1\" max=\"4095\" value=\"%"PRIu32"\" id=\"slfled%d_bri\" oninput=\"updslider('led%d_bri')\">",
+                          settings.ledn_bri[l], l, l);
+      pfp += sprintf(pfp, "<input type=\"text\" name=\"led%d_bri\" id=\"led%d_bri\" value=\"%"PRIu32"\">",
+                          l, l, settings.ledn_bri[l]);
+      pfp += sprintf(pfp, "</td></tr>");
+    }
+    strcat(pfp, "<tr><th><input type=\"submit\" name=\"su\" value=\"Test only\"></th>");
+    strcat(pfp, "<th><input type=\"submit\" name=\"su\" value=\"Save\"></th></tr>");
+    strcat(pfp, "</table></form><br>");
   } else if (strcmp(subpage, "setmisc") == 0) { /* Misc settings */
     strcpy(myresponse, "<form action=\"savesettings\" method=\"POST\" onsubmit=\"submitsettings(event)\">");
     strcat(myresponse, "<table>");
@@ -649,6 +667,13 @@ struct u8set_s {
   uint8_t maxval;
 };
 
+struct u32set_s {
+  const uint8_t * name;
+  uint32_t minval;
+  uint32_t maxval; /* FIXME: Because we use a signed int along the way,
+                    * the actual max that can be set must be below 2**31 */
+};
+
 static const struct strset_s strsets[] = {
   { .name = "adminpw", .minlen = 0, .maxlen = 24 },
   { .name = "wifi_ap_ssid", .minlen = 2, .maxlen = 32 },
@@ -659,6 +684,12 @@ static const struct strset_s strsets[] = {
 
 static const struct u8set_s u8sets[] = {
   { .name = "wifi_mode", .minval = 0, .maxval = 1 },
+};
+
+static const struct u32set_s u32sets[] = {
+  { .name = "led0_bri", .minval = 0, .maxval = 4095 },
+  { .name = "led1_bri", .minval = 0, .maxval = 4095 },
+  { .name = "led2_bri", .minval = 0, .maxval = 4095 },
 };
 
 esp_err_t post_savesettings(httpd_req_t * req) {
@@ -815,6 +846,45 @@ esp_err_t post_savesettings(httpd_req_t * req) {
       settingshavechanged = 1;
       strcat(myresponse, "'");
       strcat(myresponse, u8sets[i].name);
+      strcat(myresponse, "' changed.<br>");
+    }
+  }
+  /* u32 values */
+  for (int i = 0; i < (sizeof(u32sets) / sizeof(struct u32set_s)); i++) {
+    if (httpd_query_key_value(postcontent, u32sets[i].name, tmp1, sizeof(tmp1)) != ESP_OK) {
+      continue; // No such setting in submitted values.
+    }
+    long newv = strtol(tmp1, NULL, 10);
+    if ((newv < u32sets[i].minval) || (newv > u32sets[i].maxval)) {
+      sprintf(myresponse, "ERROR: value %lu for '%s' is outside permitted range [%"PRIu32"...%"PRIu32"]",
+                          newv, u32sets[i].name, u32sets[i].minval, u32sets[i].maxval);
+      httpd_resp_send(req, myresponse, HTTPD_RESP_USE_STRLEN);
+      return ESP_OK;
+    }
+    /* Range is valid, has the value changed? */
+    uint32_t oldv = 0;
+    e = nvs_get_u32(nvshandle, u32sets[i].name, &oldv);
+    if ((e != ESP_OK) && (e != ESP_ERR_NVS_NOT_FOUND)) {
+      ESP_LOGE("webserver.c", "Failed to query setting in flash: %s.",
+                              esp_err_to_name(e));
+      httpd_resp_set_status(req, "500 Internal Server Error");
+      httpd_resp_send(req, "Error reading non-volatile storage for settings.", HTTPD_RESP_USE_STRLEN);
+      return ESP_OK;
+    }
+    if ((e == ESP_ERR_NVS_NOT_FOUND)
+     || (oldv != newv)) { // OK, this setting has changed.
+      // Write the changed value.
+      e = nvs_set_u32(nvshandle, u32sets[i].name, (uint32_t)newv);
+      if (e != ESP_OK) {
+        ESP_LOGE("webserver.c", "Failed to write changed setting to flash: %s.",
+                                esp_err_to_name(e));
+        httpd_resp_set_status(req, "500 Internal Server Error");
+        httpd_resp_send(req, "Error writing non-volatile storage for settings.", HTTPD_RESP_USE_STRLEN);
+        return ESP_OK;
+      }
+      settingshavechanged = 1;
+      strcat(myresponse, "'");
+      strcat(myresponse, u32sets[i].name);
       strcat(myresponse, "' changed.<br>");
     }
   }

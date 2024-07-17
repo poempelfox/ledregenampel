@@ -19,6 +19,14 @@ static void loadu8(nvs_handle_t nvshandle, const char * key, uint8_t * out)
   }
 }
 
+static void loadu32(nvs_handle_t nvshandle, const char * key, uint32_t * out)
+{
+  esp_err_t e = nvs_get_u32(nvshandle, key, out);
+  if ((e != ESP_OK) && (e != ESP_ERR_NVS_NOT_FOUND)) {
+    ESP_LOGW("settings.c", "failed to load u32 setting %s: %s", key, esp_err_to_name(e));
+  }
+}
+
 static void loadstr(nvs_handle_t nvshandle, const char * key, char * out, size_t len)
 {
   size_t l = len;
@@ -57,6 +65,10 @@ void settings_load(void)
   loadstr(nvshandle, "wifi_cl_pw", settings.wifi_cl_pw, sizeof(settings.wifi_cl_pw));
   loadstr(nvshandle, "wifi_ap_ssid", settings.wifi_ap_ssid, sizeof(settings.wifi_ap_ssid));
   loadstr(nvshandle, "wifi_ap_pw", settings.wifi_ap_pw, sizeof(settings.wifi_ap_pw));
+  for (int l = 0; l <= 2; l++) {
+    sprintf(tmp1, "led%d_bri", l);
+    loadu32(nvshandle, tmp1, &(settings.ledn_bri[l]));
+  }
   nvs_close(nvshandle);
 }
 
@@ -69,6 +81,7 @@ void settings_hardcode(void) {
                            esp_err_to_name(e));
     return;
   }
+  nvs_set_u8(nvshandle, "wifi_mode", 1); /* Client-mode not AP */
   nvs_set_str(nvshandle, "wifi_cl_ssid", "37C3-open");
   nvs_set_str(nvshandle, "wifi_cl_pw", "");
   nvs_close(nvshandle);

@@ -18,6 +18,9 @@ struct globalsettings {
 	uint8_t wifi_ap_pw[64];
 	/* Password for the Admin pages in the Webinterface */
 	uint8_t adminpw[25];
+        /* The brightness for each of the three LED channels
+         * (for PWM, so 0-4095) */
+        uint32_t ledn_bri[3];
 };
 
 extern struct globalsettings settings;

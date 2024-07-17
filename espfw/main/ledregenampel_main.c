@@ -16,6 +16,7 @@
 #include <math.h>
 #include <esp_netif.h>
 #include "i2c.h"
+#include "leds.h"
 #include "network.h"
 #include "settings.h"
 #include "webserver.h"
@@ -55,6 +56,8 @@ void app_main(void)
 
     i2c_port_init();
 
+    leds_init();
+
     /* Unfortunately, time does not (always) revert to 0 on an
      * esp_restart. So we set all timestamps to "now" instead. */
     time_t lastupdatt = time(NULL);
@@ -93,6 +96,7 @@ void app_main(void)
       ESP_LOGW("main.c", "Warning: Could not connect to WiFi. This is probably not good.");
     }
 
+    int curled = 0; /* Just for toying around */
     /* Now loop, polling regenampel.de every 5 minutes or so. */
     while (1) {
       if (lastupdatt > time(NULL)) { /* This should not be possible, but we've
@@ -103,13 +107,18 @@ void app_main(void)
         lastupdatt = time(NULL); // We should return to normality on next iteration
       }
       time_t curts = time(NULL);
-      if ((curts - lastupdatt) >= 300) {
+      if ((curts - lastupdatt) >= 3) {
         lastupdatt = curts;
         int naevs = (activeevs == 0) ? 1 : 0;
         evs[naevs].lastupdatt = lastupdatt;
         ESP_LOGI("main.c", "Trying to update from regenampel.de...");
 
         /* FIXME do update here */
+
+        /* Just some toying with the LEDs for now */
+        leds_setledon(curled);
+        curled = (curled + 1) % 3;
+
         lastupdsuc = curts;
         evs[naevs].lastupdsuc = lastupdsuc;
 
