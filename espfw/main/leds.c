@@ -16,7 +16,7 @@ void leds_init(void)
     .duty_resolution = LEDC_TIMER_12_BIT, /* 12 bit resolution, i.e. 0-4095 */
     .timer_num = LEDC_TIMER_0, /* timer source */
     .freq_hz = 2000, /* not sure what's best here yet. 1000 flickers quite bad visibly. */
-    .clk_cfg = LEDC_AUTO_CLK, /* I don't understand a word the documentation says, so this is copied from the example */
+    .clk_cfg = LEDC_AUTO_CLK, /* FIXME to check: does this select a DFS compatible clock? */
   };
   esp_err_t e = ledc_timer_config(&ltc);
   if (e != ESP_OK) {
@@ -27,7 +27,7 @@ void leds_init(void)
     .intr_type = LEDC_INTR_DISABLE,
     .timer_sel = LEDC_TIMER_0,
     .duty = 0, /* duty cycle 0 a.k.a. off for now */
-    .hpoint = 0, /* absolutely no clue */
+    .hpoint = 0, /* we don't need to spread the load because we only use one LED at a time, so offset 0 is fine */
     //.output_invert = 0,
   };
   /* Now use this 3 times to configure our 3 LED channels */
