@@ -21,6 +21,10 @@ struct globalsettings {
         /* The brightness for each of the three LED channels
          * (for PWM, so 0-4095) */
         uint32_t ledn_bri[3];
+	/* regenampel.de request string */
+	uint8_t radereqstr[256];
+        /* ...and prewarntime (how long before rain the light goes yellow) */
+        uint8_t radeprewarntime;
 };
 
 extern struct globalsettings settings;

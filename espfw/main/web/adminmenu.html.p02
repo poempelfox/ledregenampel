@@ -90,6 +90,8 @@ function updslider(n) {
 <div id="setwifi" style="display:none;">Loading... (note: this requires Javascript!)</div>
 <h4 onclick="togset(event, 'setleds');">&#9656; LEDs</h4>
 <div id="setleds" style="display:none;">Loading... (note: this requires Javascript!)</div>
+<h4 onclick="togset(event, 'setrade');">&#9656; regenampel.de</h4>
+<div id="setrade" style="display:none;">Loading... (note: this requires Javascript!)</div>
 <h4 onclick="togset(event, 'setmisc');">&#9656; Miscellaneous</h4>
 <div id="setmisc" style="display:none;">Loading... (note: this requires Javascript!)</div>
 <!-- more settings to come -->

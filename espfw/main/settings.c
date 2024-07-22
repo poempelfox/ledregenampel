@@ -69,6 +69,8 @@ void settings_load(void)
     sprintf(tmp1, "led%d_bri", l);
     loadu32(nvshandle, tmp1, &(settings.ledn_bri[l]));
   }
+  loadstr(nvshandle, "radereqstr", settings.radereqstr, sizeof(settings.radereqstr));
+  loadu8(nvshandle, "radeprewarntime", &(settings.radeprewarntime));
   nvs_close(nvshandle);
 }
 

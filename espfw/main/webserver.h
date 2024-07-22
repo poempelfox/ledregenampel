@@ -8,6 +8,7 @@
 struct ev {
   time_t lastupdatt;
   time_t lastupdsuc;
+  int light_color;
 };
 
 /* Initialize and start the Webserver. */

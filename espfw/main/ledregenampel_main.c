@@ -18,6 +18,7 @@
 #include "i2c.h"
 #include "leds.h"
 #include "network.h"
+#include "regenampelde.h"
 #include "settings.h"
 #include "webserver.h"
 
@@ -36,6 +37,7 @@ int pendingfwverify = 0;
 /* we need this to display our IP, it is in network.c */
 extern esp_netif_t * mainnetif;
 
+struct rade_data rad;
 
 void app_main(void)
 {
@@ -92,11 +94,15 @@ void app_main(void)
                                          (7000 / portTICK_PERIOD_MS));
     if ((eb & NETWORK_CONNECTED_BIT) == NETWORK_CONNECTED_BIT) {
       ESP_LOGI("main.c", "Successfully connected to network.");
+      // Immediately try to fetch data.
+      if (rade_tryupdate(&rad) == 0) { // Success!
+        leds_setledon(rad.light_color);
+        evs[activeevs].light_color = rad.light_color;
+      }
     } else {
       ESP_LOGW("main.c", "Warning: Could not connect to WiFi. This is probably not good.");
     }
 
-    int curled = 0; /* Just for toying around */
     /* Now loop, polling regenampel.de every 5 minutes or so. */
     while (1) {
       if (lastupdatt > time(NULL)) { /* This should not be possible, but we've
@@ -107,20 +113,21 @@ void app_main(void)
         lastupdatt = time(NULL); // We should return to normality on next iteration
       }
       time_t curts = time(NULL);
-      if ((curts - lastupdatt) >= 3) {
+      if ((curts - lastupdatt) >= 300) {
         lastupdatt = curts;
         int naevs = (activeevs == 0) ? 1 : 0;
         evs[naevs].lastupdatt = lastupdatt;
         ESP_LOGI("main.c", "Trying to update from regenampel.de...");
 
         /* FIXME do update here */
-
-        /* Just some toying with the LEDs for now */
-        leds_setledon(curled);
-        curled = (curled + 1) % 3;
-
-        lastupdsuc = curts;
-        evs[naevs].lastupdsuc = lastupdsuc;
+        struct rade_data nrad;
+        if (rade_tryupdate(&nrad) == 0) { // Successful update
+          lastupdsuc = curts;
+          evs[naevs].lastupdsuc = lastupdsuc;
+          rad = nrad;
+          leds_setledon(rad.light_color);
+          evs[naevs].light_color = rad.light_color;
+        }
 
         /* Now mark the updated values as the current ones for the webserver */
         activeevs = naevs;

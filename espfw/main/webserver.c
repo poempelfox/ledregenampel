@@ -223,7 +223,8 @@ esp_err_t get_startpage_handler(httpd_req_t * req) {
   strcpy(myresponse, startp_p1);
   pfp = myresponse + strlen(startp_p1);
   pfp += sprintf(pfp, "<table><tr><th>Update attempt TS</th><td id=\"ts\">%lld</td></tr>", evs[e].lastupdatt);
-  pfp += sprintf(pfp, "<table><tr><th>Update success TS</th><td id=\"ts\">%lld</td></tr>", evs[e].lastupdsuc);
+  pfp += sprintf(pfp, "<tr><th>Update success TS</th><td id=\"ts\">%lld</td></tr>", evs[e].lastupdsuc);
+  pfp += sprintf(pfp, "<tr><th>Light color</th><td id=\"light_color\">%d</td></tr>", evs[e].light_color);
   pfp += sprintf(pfp, "</table>");
   strcat(myresponse, startp_p2);
   /* The following two lines are the default und thus redundant. */
@@ -249,7 +250,8 @@ esp_err_t get_json_handler(httpd_req_t * req) {
   pfp = myresponse;
   pfp += sprintf(pfp, "{");
   pfp += sprintf(pfp, "\"updattts\":\"%lld\",", evs[e].lastupdatt);
-  pfp += sprintf(pfp, "\"updsucts\":\"%lld\"}", evs[e].lastupdsuc);
+  pfp += sprintf(pfp, "\"updsucts\":\"%lld\",", evs[e].lastupdsuc);
+  pfp += sprintf(pfp, "\"light_color\":\"%d\"}", evs[e].light_color);
   /* The following line is the default und thus redundant. */
   httpd_resp_set_status(req, "200 OK");
   httpd_resp_set_type(req, "application/json");
@@ -475,6 +477,23 @@ esp_err_t get_adminmenu_handler(httpd_req_t * req) {
     strcat(pfp, "<tr><th><input type=\"submit\" name=\"su\" value=\"Test only\"></th>");
     strcat(pfp, "<th><input type=\"submit\" name=\"su\" value=\"Save\"></th></tr>");
     strcat(pfp, "</table></form><br>");
+  } else if (strcmp(subpage, "setrade") == 0) { /* regenampel.de settings */
+    strcpy(myresponse, "<form action=\"savesettings\" method=\"POST\" onsubmit=\"submitsettings(event)\">");
+    strcat(myresponse, "<table>");
+    strcat(myresponse, "<tr><th>Querystring for regenampel.de-API<br>");
+    strcat(myresponse, "Everything after the quesion mark, starts with location=...</th><td>");
+    getstrsetting(nvshandle, "radereqstr", tmp1, sizeof(tmp1));
+    pfp = myresponse + strlen(myresponse);
+    sprintf(pfp, "<input type=\"text\" name=\"radereqstr\" value=\"%s\">", tmp1);
+    strcat(myresponse, "</td></tr>");
+    strcat(myresponse, "<tr><th>prewarntime<br>light turns yellow this many minutes");
+    strcat(myresponse, " before rain starts (upstream default: 10)</th><td>");
+    curs = getu8setting(nvshandle, "radeprewarntime");
+    pfp = myresponse + strlen(myresponse);
+    sprintf(pfp, "<input type=\"text\" name=\"radeprewarntime\" value=\"%d\">", curs);
+    strcat(myresponse, "</td></tr>");
+    strcat(myresponse, "<tr><th colspan=\"2\"><input type=\"submit\" name=\"su\" value=\"Set\"></th></tr>");
+    strcat(myresponse, "</table></form><br>");
   } else if (strcmp(subpage, "setmisc") == 0) { /* Misc settings */
     strcpy(myresponse, "<form action=\"savesettings\" method=\"POST\" onsubmit=\"submitsettings(event)\">");
     strcat(myresponse, "<table>");
@@ -680,10 +699,12 @@ static const struct strset_s strsets[] = {
   { .name = "wifi_ap_pw", .minlen = 0, .maxlen = 63 },
   { .name = "wifi_cl_ssid", .minlen = 2, .maxlen = 32 },
   { .name = "wifi_cl_pw", .minlen = 0, .maxlen = 63 },
+  { .name = "radereqstr", .minlen = 0, .maxlen = 255 },
 };
 
 static const struct u8set_s u8sets[] = {
   { .name = "wifi_mode", .minval = 0, .maxval = 1 },
+  { .name = "radeprewarntime", .minval = 0, .maxval = 119 },
 };
 
 static const struct u32set_s u32sets[] = {
