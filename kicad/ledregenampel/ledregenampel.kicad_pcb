@@ -8494,8 +8494,8 @@
 		)
 		(pad "1" thru_hole circle
 			(at 1.5 17.43)
-			(size 1.524 1.524)
-			(drill 0.762)
+			(size 1.9 1.9)
+			(drill 1)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net 159 "GND")
@@ -8505,8 +8505,8 @@
 		)
 		(pad "2" thru_hole circle
 			(at 1.5 14.89)
-			(size 1.524 1.524)
-			(drill 0.762)
+			(size 1.9 1.9)
+			(drill 1)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net 167 "+3V3")
@@ -8516,8 +8516,8 @@
 		)
 		(pad "3" thru_hole circle
 			(at 1.5 12.35)
-			(size 1.524 1.524)
-			(drill 0.762)
+			(size 1.9 1.9)
+			(drill 1)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net 177 "Net-(J3-Pin_1)")
@@ -8527,8 +8527,8 @@
 		)
 		(pad "4" thru_hole circle
 			(at 1.5 9.81)
-			(size 1.524 1.524)
-			(drill 0.762)
+			(size 1.9 1.9)
+			(drill 1)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net 178 "Net-(J3-Pin_2)")
@@ -8538,8 +8538,8 @@
 		)
 		(pad "5" thru_hole circle
 			(at 1.5 7.27)
-			(size 1.524 1.524)
-			(drill 0.762)
+			(size 1.9 1.9)
+			(drill 1)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net 168 "unconnected-(U2-NC-Pad5)")
@@ -38178,7 +38178,7 @@
 		(descr "Resistor SMD 0402 (1005 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator")
 		(tags "resistor")
 		(property "Reference" "R75"
-			(at -0.788259 -1.1217 270)
+			(at -0.788259 -1.1217 -90)
 			(layer "F.SilkS")
 			(uuid "76d7fad1-434c-4d09-ad3a-15f916c51abd")
 			(effects
@@ -46090,7 +46090,7 @@
 		(descr "Resistor SMD 0402 (1005 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator")
 		(tags "resistor")
 		(property "Reference" "R126"
-			(at -1 -1.17 270)
+			(at -1 -1.17 -90)
 			(layer "F.SilkS")
 			(uuid "9e04adf7-4da6-45f0-9c31-4f0e90cb63c0")
 			(effects
@@ -57180,7 +57180,7 @@
 		(descr "Resistor SMD 0402 (1005 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator")
 		(tags "resistor")
 		(property "Reference" "R103"
-			(at 0 -1.17 270)
+			(at 0 -1.17 -90)
 			(layer "F.SilkS")
 			(uuid "6d33313f-da90-40c5-ab0f-ae621409cd19")
 			(effects
