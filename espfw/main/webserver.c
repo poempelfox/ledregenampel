@@ -225,6 +225,8 @@ esp_err_t get_startpage_handler(httpd_req_t * req) {
   pfp += sprintf(pfp, "<table><tr><th>Update attempt TS</th><td id=\"ts\">%lld</td></tr>", evs[e].lastupdatt);
   pfp += sprintf(pfp, "<tr><th>Update success TS</th><td id=\"ts\">%lld</td></tr>", evs[e].lastupdsuc);
   pfp += sprintf(pfp, "<tr><th>Light color</th><td id=\"light_color\">%d</td></tr>", evs[e].light_color);
+  pfp += sprintf(pfp, "<tr><th>Message1</th><td id=\"message1\">%s</td></tr>", evs[e].message1);
+  pfp += sprintf(pfp, "<tr><th>Message2</th><td id=\"message2\">%s</td></tr>", evs[e].message2);
   pfp += sprintf(pfp, "</table>");
   strcat(myresponse, startp_p2);
   /* The following two lines are the default und thus redundant. */
@@ -251,7 +253,11 @@ esp_err_t get_json_handler(httpd_req_t * req) {
   pfp += sprintf(pfp, "{");
   pfp += sprintf(pfp, "\"updattts\":\"%lld\",", evs[e].lastupdatt);
   pfp += sprintf(pfp, "\"updsucts\":\"%lld\",", evs[e].lastupdsuc);
-  pfp += sprintf(pfp, "\"light_color\":\"%d\"}", evs[e].light_color);
+  pfp += sprintf(pfp, "\"light_color\":\"%d\",", evs[e].light_color);
+  /* FIXME: We do not filter quotation marks or other bad
+   * characters from the messages, so this can easily break... */
+  pfp += sprintf(pfp, "\"message1\":\"%s\",", evs[e].message1);
+  pfp += sprintf(pfp, "\"message2\":\"%s\"}", evs[e].message2);
   /* The following line is the default und thus redundant. */
   httpd_resp_set_status(req, "200 OK");
   httpd_resp_set_type(req, "application/json");

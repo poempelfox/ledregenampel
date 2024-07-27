@@ -63,6 +63,8 @@ void app_main(void)
     i2c_port_init();
     sh1122_init();
     db = di_newdispbuf();
+    di_drawtext(db, 0, 0, &font_terminus32bold, 0xff, "Foxis LED-Regen-Ampel");
+    sh1122_display(db);
 
     leds_init();
 
@@ -109,10 +111,6 @@ void app_main(void)
       ESP_LOGW("main.c", "Warning: Could not connect to WiFi. This is probably not good.");
     }
 
-    /* First test */
-    di_drawtext(db, 0, 0, &font_terminus32bold, 0xff, "This is a test");
-    sh1122_display(db);
-    
     /* Now loop, polling regenampel.de every 5 minutes or so. */
     while (1) {
       if (lastupdatt > time(NULL)) { /* This should not be possible, but we've
@@ -136,7 +134,13 @@ void app_main(void)
           evs[naevs].lastupdsuc = lastupdsuc;
           rad = nrad;
           leds_setledon(rad.light_color);
+          di_drawrect(db, 0, 0, 255, 63, -1, 0x00);
+          di_drawtext(db, 0, 0, &font_terminus32bold, 0xff, rad.message1);
+          di_drawtext(db, 0, 32, &font_terminus32bold, 0xff, rad.message2);
+          sh1122_display(db);
           evs[naevs].light_color = rad.light_color;
+          strcpy(evs[naevs].message1, rad.message1);
+          strcpy(evs[naevs].message2, rad.message2);
         }
 
         /* Now mark the updated values as the current ones for the webserver */

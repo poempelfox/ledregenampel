@@ -119,11 +119,11 @@ int rade_tryupdate(struct rade_data * newdata)
       }
     }
     if (strncmp(ni, "Message1=", 9) == 0) {
-      strcpy(newdata->message1, (ni + 9));
+      strlcpy(newdata->message1, (ni + 9), sizeof(newdata->message1));
       newdata->valid = 1;
     }
     if (strncmp(ni, "Message2=", 9) == 0) {
-      strcpy(newdata->message2, (ni + 9));
+      strlcpy(newdata->message2, (ni + 9), sizeof(newdata->message2));
       newdata->valid = 1;
     }
     ni = strtok_r(NULL, "\n", &stmp);

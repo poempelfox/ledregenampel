@@ -7,8 +7,8 @@
 /* We fill this struct with data */
 struct rade_data {
   int light_color;
-  uint8_t message1[150];
-  uint8_t message2[150];
+  uint8_t message1[100];
+  uint8_t message2[100];
   int valid;
 };
 
