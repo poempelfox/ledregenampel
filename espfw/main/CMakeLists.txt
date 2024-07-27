@@ -2,7 +2,7 @@
 set(COMPONENT_REQUIRES )
 set(COMPONENT_PRIV_REQUIRES )
 
-set(COMPONENT_SRCS "ledregenampel_main.c" "i2c.c" "leds.c" "network.c" "regenampelde.c" "settings.c" "webserver.c")
+set(COMPONENT_SRCS "ledregenampel_main.c" "i2c.c" "leds.c" "network.c" "regenampelde.c" "settings.c" "sh1122.c" "webserver.c" "fonts/terminus32bold.c")
 set(COMPONENT_ADD_INCLUDEDIRS "")
 set(COMPONENT_EMBED_TXTFILES "web/css.css.min"
                              "web/startpage.html.p00" "web/startpage.html.p01"

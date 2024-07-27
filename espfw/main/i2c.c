@@ -8,6 +8,9 @@
  * Therefore, this config is fixed and cannot be configured:
  * SCL is on GPIO0,
  * SDA is on GPIO1.
+ * Frequency is set to 400k, the maximum the display supports, which is
+ * extremely slow anyways already, as the display does 4 bit grayscale
+ * per pixel, so a full screen update transmits a lot of data.
  */
 
 void i2c_port_init(void)
@@ -18,7 +21,7 @@ void i2c_port_init(void)
       .scl_io_num = 0,
       .sda_pullup_en = GPIO_PULLUP_ENABLE,
       .scl_pullup_en = GPIO_PULLUP_ENABLE,
-      .master.clk_speed = 100000U,
+      .master.clk_speed = 400000U,
     };
     i2c_param_config(I2C_NUM_0, &i2cpnconf);
     if (i2c_driver_install(I2C_NUM_0, i2cpnconf.mode, 0, 0, 0) != ESP_OK) {

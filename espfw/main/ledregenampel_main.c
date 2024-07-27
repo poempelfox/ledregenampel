@@ -20,6 +20,7 @@
 #include "network.h"
 #include "regenampelde.h"
 #include "settings.h"
+#include "sh1122.h"
 #include "webserver.h"
 
 #define sleep_ms(x) vTaskDelay(pdMS_TO_TICKS(x))
@@ -36,6 +37,9 @@ int pendingfwverify = 0;
 
 /* we need this to display our IP, it is in network.c */
 extern esp_netif_t * mainnetif;
+
+/* Our main display buffer (we currently only use one) */
+struct di_dispbuf * db;
 
 struct rade_data rad;
 
@@ -57,6 +61,8 @@ void app_main(void)
     network_on(); /* We don't do network_off, we just try to stay connected */
 
     i2c_port_init();
+    sh1122_init();
+    db = di_newdispbuf();
 
     leds_init();
 
@@ -103,6 +109,10 @@ void app_main(void)
       ESP_LOGW("main.c", "Warning: Could not connect to WiFi. This is probably not good.");
     }
 
+    /* First test */
+    di_drawtext(db, 0, 0, &font_terminus32bold, 0xff, "This is a test");
+    sh1122_display(db);
+    
     /* Now loop, polling regenampel.de every 5 minutes or so. */
     while (1) {
       if (lastupdatt > time(NULL)) { /* This should not be possible, but we've
