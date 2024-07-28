@@ -1,7 +1,9 @@
 /* Talking to a SH1122 based I2C OLED display.
  * This is a lot of copy+pasta from foxesptemp, which supports an entirely
  * different controller chip, that nonetheless uses a surprisingly
- * similiar protocol. */
+ * similiar protocol.
+ * Also included in here are the basic display functions from display.c
+ * because I'm lazy. */
 
 #include <stdlib.h>
 #include <string.h>
@@ -202,35 +204,26 @@ void di_drawchar(struct di_dispbuf * db,
                  uint8_t ch)
 {
     //ESP_LOGI("sh1122.c", "Drawing '%c' from offset %u at %d/%d", ch, fo->offsets[ch], x, y);
-    if (fo->offsets[ch] == 0) { /* This char is not in our font. */
+    if ((ch < fo->first) || (ch > fo->last)) {
+      /* This char is not in our font. */
       return;
     }
-    int bpc = 1;
-    if (fo->width > 16) {
-      bpc = 3;
-    } else if (fo->width > 8) {
-      bpc = 2;
-    }
-    const uint8_t * fdp = fo->data + (fo->height
-                                      * (fo->offsets[ch] - 1)
-                                      * bpc);
-    for (int yo = 0; yo < fo->height; yo++) {
-      uint32_t rd = *fdp;
-      if (bpc >= 3) { /* 3 instead of 1 bytes per row */
-        fdp++;
-        rd = (rd << 8) | *fdp;
-      }
-      if (bpc >= 2) { /* 2 instead of 1 bytes per row */
-        fdp++;
-        rd = (rd << 8) | *fdp;
-      }
-      fdp++;
-      rd = rd >> ((bpc * 8) - fo->width); /* right-align the bitmask */
-      for (int xo = (fo->width - 1); xo >= 0; xo--) {
-        if (rd & 1) {
-          di_setpixel(db, x + xo, y + yo, co);
+    GFXglyph gly = fo->glyph[ch - fo->first];
+    uint8_t * bm = fo->bitmap + gly.bitmapOffset;
+    uint8_t curbyte = *bm;
+    int bitsused = 0;
+    for (int yp = 0; yp < gly.height; yp++) {
+      for (int xp = 0; xp < gly.width; xp++) {
+        if (bitsused > 7) { // previous byte used up, load next byte
+          bm++;
+          curbyte = *bm;
+          bitsused = 0;
         }
-        rd >>= 1;
+        if (curbyte & 0x80) { // Pixel is set!
+          di_setpixel(db, x + gly.xOffset + xp, y + gly.yOffset + yp, co);
+        }
+        curbyte <<= 1;
+        bitsused++;
       }
     }
 }
@@ -241,15 +234,38 @@ void di_drawtext(struct di_dispbuf * db,
                  uint8_t * txt)
 {
     while (*txt != 0) {
+      uint8_t ch = *txt;
+      if ((ch < fo->first) || (ch > fo->last)) { // Character is not in font
+        // instead of just skipping, we need to make clear there is something
+        // missing here.
+        // we use fo->last, which should always contain the beloved
+        // "unknown character symbol" (U+FFFD).
+        ch = fo->last;
+      }
+      GFXglyph gly = fo->glyph[ch - fo->first];
       //ESP_LOGI("sh1122.c", "Drawing character '%c' at %d/%d", *txt, x, y);
-      di_drawchar(db, x, y, fo, co, *txt);
+      di_drawchar(db, x, y, fo, co, ch);
+      x += gly.xAdvance;
       txt++;
-      x += fo->width;
     }
+}
+
+int di_calctextwidth(struct font * fo, uint8_t * txt)
+{
+    int res = 0;
+    while (*txt != 0) {
+      uint8_t ch = *txt;
+      if ((ch < fo->first) || (ch > fo->last)) { // Character is not in font
+        ch = fo->last;
+      }
+      GFXglyph gly = fo->glyph[ch - fo->first];
+      res += gly.xAdvance;
+      txt++;
+    }
+    return res;
 }
 
 int di_calctextcenter(struct font * fo, int x1, int x2, uint8_t * txt)
 {
-    return x1 + ((x2 - x1 - ((int)strlen(txt) * (int)fo->width)) / 2);
+    return x1 + ((x2 - x1 - di_calctextwidth(fo, txt) ) / 2);
 }
-

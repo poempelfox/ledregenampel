@@ -45,9 +45,11 @@ void di_drawrect(struct di_dispbuf * db, int x1, int y1, int x2, int y2,
 void di_invertall(struct di_dispbuf * db);
 
 /* Embedded fonts. */
-extern struct font font_terminus32bold;
+extern struct font font_FreeSansBold21pt;
 
 /* Text functions */
+/* Be aware that the y position is the BOTTOM of
+ * the font, not the top as one might expect. */
 void di_drawchar(struct di_dispbuf * db,
                  int x, int y, struct font * fo,
                  uint8_t co,
@@ -57,6 +59,10 @@ void di_drawtext(struct di_dispbuf * db,
                  int x, int y, struct font * fo,
                  uint8_t co,
                  uint8_t * txt);
+
+/* Calculate the width in pixels of a piece of text.
+ * As we have variable width fonts, this depends on the text. */
+int di_calctextwidth(struct font * fo, uint8_t * txt);
 
 /* Tiny helper to calculate the x position where a text needs to
  * be put to appear centered between x1 and x2. */

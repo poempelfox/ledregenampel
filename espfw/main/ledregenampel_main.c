@@ -63,7 +63,7 @@ void app_main(void)
     i2c_port_init();
     sh1122_init();
     db = di_newdispbuf();
-    di_drawtext(db, 0, 0, &font_terminus32bold, 0xff, "Foxis LED-Regen-Ampel");
+    di_drawtext(db, 10, 30, &font_FreeSansBold21pt, 0xff, "Foxis LED-Regen-Ampel");
     sh1122_display(db);
 
     leds_init();
@@ -135,8 +135,8 @@ void app_main(void)
           rad = nrad;
           leds_setledon(rad.light_color);
           di_drawrect(db, 0, 0, 255, 63, -1, 0x00);
-          di_drawtext(db, 0, 0, &font_terminus32bold, 0xff, rad.message1);
-          di_drawtext(db, 0, 32, &font_terminus32bold, 0xff, rad.message2);
+          di_drawtext(db, 0, 30, &font_FreeSansBold21pt, 0xff, rad.message1);
+          di_drawtext(db, 0, 62, &font_FreeSansBold21pt, 0xff, rad.message2);
           sh1122_display(db);
           evs[naevs].light_color = rad.light_color;
           strcpy(evs[naevs].message1, rad.message1);
