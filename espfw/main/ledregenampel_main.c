@@ -15,6 +15,7 @@
 #include <esp_ota_ops.h>
 #include <math.h>
 #include <esp_netif.h>
+#include "display.h"
 #include "i2c.h"
 #include "leds.h"
 #include "network.h"
@@ -134,10 +135,10 @@ void app_main(void)
           evs[naevs].lastupdsuc = lastupdsuc;
           rad = nrad;
           leds_setledon(rad.light_color);
-          di_drawrect(db, 0, 0, 255, 63, -1, 0x00);
-          di_drawtext(db, 0, 30, &font_FreeSansBold21pt, 0xff, rad.message1);
-          di_drawtext(db, 0, 62, &font_FreeSansBold21pt, 0xff, rad.message2);
-          sh1122_display(db);
+          di_updateoledwith2msgs(db, rad.message1, rad.message2);
+          /* invert the display for the second 15 minutes
+           * of every half hour to guarantee equal pixel aging */
+          sh1122_setinvertmode( ((curts % 1800) > 900) );
           evs[naevs].light_color = rad.light_color;
           strcpy(evs[naevs].message1, rad.message1);
           strcpy(evs[naevs].message2, rad.message2);
