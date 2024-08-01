@@ -112,4 +112,18 @@ die Platine wuerde wahrscheinlich recht schnell ueberhitzen.
 * basiert auf der foxesptemp-Firmware.
 * hat ein Admin-Webinterface, ueber das der angezeigte Ort (bzw. Weg)
   und die Helligkeit der Ampelfarben eingestellt werden kann.
+* Hinweis: Der C3 wird anders programmiert als die meisten
+  ESPs, es gibt naemlich keinen USB-seriell-Adapter auf der
+  winzigen Platine. Stattdessen muss man: USB mit dem Rechner
+  verbinden, dann den "Boot"-Knopf gedrueckt halten, dann
+  kurz "Reset" druecken, dann kann man nach ein paar
+  Sekunden "Boot" wieder loslassen. Dadurch geht der Chip
+  in den Programmiermodus, der Bootloader emuliert einen
+  USB-Seriell-Adapter, und man kann ihn wie gewohnt
+  ueber idf.py flashen. Auch den Reset am Ende des Flashens
+  muss man allerdings manuell machen, wieder ueber
+  Knopfdruck. Gluecklicherweise muss man dieses komplexe
+  Procedere nur ein mal zur Erstbefuellung durchfuehren:
+  Die ledregenampel-firmware unterstuetzt Online-Firmware-
+  Update ueber ihr Webinterface...
 
