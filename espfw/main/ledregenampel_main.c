@@ -15,6 +15,7 @@
 #include <esp_ota_ops.h>
 #include <math.h>
 #include <esp_netif.h>
+#include <sys/time.h>
 #include "display.h"
 #include "i2c.h"
 #include "leds.h"
@@ -42,7 +43,10 @@ extern esp_netif_t * mainnetif;
 /* Our main display buffer (we currently only use one) */
 struct di_dispbuf * db;
 
-struct rade_data rad;
+struct rade_data rad = { .light_color = LED_INVALID };
+
+/* regenampel.de updateinterval. We might want to move this to settings? */
+int raupdateint = 300;
 
 void app_main(void)
 {
@@ -70,9 +74,11 @@ void app_main(void)
     leds_init();
 
     /* Unfortunately, time does not (always) revert to 0 on an
-     * esp_restart. So we set all timestamps to "now" instead. */
-    time_t lastupdatt = time(NULL);
-    time_t lastupdsuc = lastupdatt;
+     * esp_restart. So we set all timestamps to "now" instead.
+     * We push back lastupdatt so an update attempt is made
+     * after about 10 seconds. */
+    time_t lastupdatt = time(NULL) - (raupdateint - 10);
+    time_t lastupdsuc = time(NULL);
 
     /* We do NTP to provide useful timestamps in our webserver output. */
     esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
@@ -103,11 +109,6 @@ void app_main(void)
                                          (7000 / portTICK_PERIOD_MS));
     if ((eb & NETWORK_CONNECTED_BIT) == NETWORK_CONNECTED_BIT) {
       ESP_LOGI("main.c", "Successfully connected to network.");
-      // Immediately try to fetch data.
-      if (rade_tryupdate(&rad) == 0) { // Success!
-        leds_setledon(rad.light_color);
-        evs[activeevs].light_color = rad.light_color;
-      }
     } else {
       ESP_LOGW("main.c", "Warning: Could not connect to WiFi. This is probably not good.");
     }
@@ -122,27 +123,34 @@ void app_main(void)
         lastupdatt = time(NULL); // We should return to normality on next iteration
       }
       time_t curts = time(NULL);
-      if ((curts - lastupdatt) >= 300) {
+      if ((curts - lastupdatt) >= raupdateint) {
         lastupdatt = curts;
         int naevs = (activeevs == 0) ? 1 : 0;
         evs[naevs].lastupdatt = lastupdatt;
         ESP_LOGI("main.c", "Trying to update from regenampel.de...");
-
-        /* FIXME do update here */
         struct rade_data nrad;
         if (rade_tryupdate(&nrad) == 0) { // Successful update
           lastupdsuc = curts;
           evs[naevs].lastupdsuc = lastupdsuc;
           rad = nrad;
-          leds_setledon(rad.light_color);
-          di_updateoledwith2msgs(db, rad.message1, rad.message2);
-          /* invert the display for the second 15 minutes
-           * of every half hour to guarantee equal pixel aging */
-          sh1122_setinvertmode( ((curts % 1800) > 900) );
-          evs[naevs].light_color = rad.light_color;
-          strcpy(evs[naevs].message1, rad.message1);
-          strcpy(evs[naevs].message2, rad.message2);
+        } else { // No successful update
+          /* Can we still reuse the old data? */
+          if ((curts - lastupdsuc) > (2 * raupdateint + 10)) {
+            // data is more than 2 update-intervals old, we no longer accept that.
+            // So null the data.
+            rad.light_color = LED_INVALID;
+            strcpy(rad.message1, "No current data :(");
+            strcpy(rad.message2, "No current data :(");
+          }
         }
+        leds_setledon(rad.light_color);
+        di_updateoledwith2msgs(db, rad.message1, rad.message2);
+        /* invert the display for the second 15 minutes
+         * of every half hour to guarantee equal pixel aging */
+        sh1122_setinvertmode( ((curts % 1800) > 900) );
+        evs[naevs].light_color = rad.light_color;
+        strcpy(evs[naevs].message1, rad.message1);
+        strcpy(evs[naevs].message2, rad.message2);
 
         /* Now mark the updated values as the current ones for the webserver */
         activeevs = naevs;
@@ -158,7 +166,19 @@ void app_main(void)
           ESP_LOGE(TAG, "No successful update in %lld seconds - about to reboot.", (time(NULL) - lastupdsuc));
           esp_restart();
         }
-      } else { /* Nothing to do, go back to sleep for a second. */
+      }
+      if (rad.light_color == LED_INVALID) { // Blink yellow
+        struct timeval ctv;
+        gettimeofday(&ctv, NULL);
+        if (ctv.tv_usec > 500000) { // later half of a second
+          leds_setledon(LED_YELLOW);
+        } else { // earlier half of a second
+          leds_setledon(0xff);
+        }
+        /* Only do a short sleep so we can blink */
+        sleep_ms(100);
+      } else {
+        /* Nothing to do but go back to sleep for a second. */
         /* We sadly cannot do meaningful powersaving here if we want the
          * webinterface to be reachable. */
         sleep_ms(1000);

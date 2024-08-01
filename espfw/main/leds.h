@@ -7,6 +7,7 @@
 #define LED_RED 0
 #define LED_YELLOW 1
 #define LED_GREEN 2
+#define LED_INVALID 0xff
 
 /* Initializes the LED pins / GPIOs.
  * Needs to be called once before calling any of the other functions. */
