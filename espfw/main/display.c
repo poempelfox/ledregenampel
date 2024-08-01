@@ -203,6 +203,8 @@ void di_convertencoding(uint8_t * s)
       *wp = 0x88; rp += 2; wp += 1;
     } else if ((*(rp+0) == 0xC2) && (*(rp+1) == 0xB1)) { // plusminus
       *wp = 0x89; rp += 2; wp += 1;
+    } else if ((*(rp+0) == 0xC3) && (*(rp+1) == 0x9F)) { // scharfes s (&szlig;)
+      *wp = 0x8A; rp += 2; wp += 1;
     } else {
       *wp = *rp; wp++; rp++;
     }

@@ -265,6 +265,7 @@ int main(int argc, char *argv[]) {
         processonechar(0x000000f6, face, table); // Umlaut oe
         processonechar(0x000000fc, face, table); // Umlaut ue
         processonechar(0x000000b1, face, table); // plusminus sign
+        processonechar(0x000000df, face, table); // &szlig; (latin small letter sharp S)
 
         processonechar(0x0000fffd, face, table); // "unknown character" symbol. Always keep this LAST!
 
