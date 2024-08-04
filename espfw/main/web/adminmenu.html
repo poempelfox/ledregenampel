@@ -31,6 +31,9 @@ function submitsettings(e) {
   e.preventDefault();
   const XHR = new XMLHttpRequest();
   const FD = new FormData(e.srcElement);
+  if (e.submitter.name === "test") {
+    FD.append("test", "Test");
+  }
   // Define what happens on successful data submission
   XHR.addEventListener("load", (event) => {
     var sr = document.getElementById("settingsresult");

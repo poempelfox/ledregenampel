@@ -43,10 +43,16 @@ extern esp_netif_t * mainnetif;
 /* Our main display buffer (we currently only use one) */
 struct di_dispbuf * db;
 
+/* Last data received from regenampel.de */
 struct rade_data rad = { .light_color = LED_INVALID };
 
 /* regenampel.de updateinterval. We might want to move this to settings? */
 int raupdateint = 300;
+
+/* This variable is normally 0. The webserver will set it to something
+ * in order to tell us, we need to blink all lights once, because the
+ * user clicked 'Test' on the webinterface. */
+uint8_t ledoverride = 0;
 
 void app_main(void)
 {
@@ -167,21 +173,33 @@ void app_main(void)
           esp_restart();
         }
       }
-      if (rad.light_color == LED_INVALID) { // Blink yellow
-        struct timeval ctv;
-        gettimeofday(&ctv, NULL);
-        if (ctv.tv_usec > 500000) { // later half of a second
-          leds_setledon(LED_YELLOW);
-        } else { // earlier half of a second
-          leds_setledon(0xff);
-        }
-        /* Only do a short sleep so we can blink */
-        sleep_ms(100);
-      } else {
-        /* Nothing to do but go back to sleep for a second. */
-        /* We sadly cannot do meaningful powersaving here if we want the
-         * webinterface to be reachable. */
+      if (ledoverride != 0) { // blink all LEDs in sequence.
+        if (ledoverride > 3) { ledoverride = 3; }
+        leds_setledon(2 - (ledoverride - 1));
+        ledoverride--;
         sleep_ms(1000);
+        if ((ledoverride == 0) && (rad.light_color != LED_INVALID)) {
+          // restore old state so we don't have to wait for next update.
+          // This is irrelevant if we're blinking anyways...
+          leds_setledon(rad.light_color);
+        }
+      } else {
+        if (rad.light_color == LED_INVALID) { // Blink yellow
+          struct timeval ctv;
+          gettimeofday(&ctv, NULL);
+          if (ctv.tv_usec > 500000) { // later half of a second
+            leds_setledon(LED_YELLOW);
+          } else { // earlier half of a second
+            leds_setledon(0xff);
+          }
+          /* Only do a short sleep so we can blink */
+          sleep_ms(100);
+        } else {
+          /* Nothing to do but go back to sleep for a second. */
+          /* We sadly cannot do meaningful powersaving here if we want the
+           * webinterface to be reachable. */
+          sleep_ms(1000);
+        }
       }
     }
 }

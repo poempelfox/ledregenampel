@@ -20,6 +20,9 @@ extern int activeevs;
 extern int pendingfwverify;
 /* This is in network.c */
 extern esp_netif_t * mainnetif;
+/* _main.c */
+extern uint8_t ledoverride;
+
 static int settingshavechanged = 0;
 
 /* How many admins can be logged in at the same time? */
@@ -480,7 +483,7 @@ esp_err_t get_adminmenu_handler(httpd_req_t * req) {
                           l, l, settings.ledn_bri[l]);
       pfp += sprintf(pfp, "</td></tr>");
     }
-    strcat(pfp, "<tr><th><input type=\"submit\" name=\"su\" value=\"Test only\"></th>");
+    strcat(pfp, "<tr><th><input type=\"submit\" name=\"test\" value=\"Test only\"></th>");
     strcat(pfp, "<th><input type=\"submit\" name=\"su\" value=\"Save\"></th></tr>");
     strcat(pfp, "</table></form><br>");
   } else if (strcmp(subpage, "setrade") == 0) { /* regenampel.de settings */
@@ -697,6 +700,7 @@ struct u32set_s {
   uint32_t minval;
   uint32_t maxval; /* FIXME: Because we use a signed int along the way,
                     * the actual max that can be set must be below 2**31 */
+  int supportstest;
 };
 
 static const struct strset_s strsets[] = {
@@ -714,9 +718,9 @@ static const struct u8set_s u8sets[] = {
 };
 
 static const struct u32set_s u32sets[] = {
-  { .name = "led0_bri", .minval = 0, .maxval = 4095 },
-  { .name = "led1_bri", .minval = 0, .maxval = 4095 },
-  { .name = "led2_bri", .minval = 0, .maxval = 4095 },
+  { .name = "led0_bri", .minval = 0, .maxval = 4095, .supportstest = 1 },
+  { .name = "led1_bri", .minval = 0, .maxval = 4095, .supportstest = 1 },
+  { .name = "led2_bri", .minval = 0, .maxval = 4095, .supportstest = 1 },
 };
 
 esp_err_t post_savesettings(httpd_req_t * req) {
@@ -744,6 +748,46 @@ esp_err_t post_savesettings(httpd_req_t * req) {
   }
   postcontent[req->content_len] = 0;
   ESP_LOGI("webserver.c", "Received data: '%s'", postcontent);
+  /* For some few settings, we support a 'test only' mode, that instantly
+   * applies the setting, but does not write to flash. Test if we have
+   * one of those settings. */
+  if (httpd_query_key_value(postcontent, "test", tmp1, sizeof(tmp1)) == ESP_OK) {
+    if (strncmp(tmp1, "Test", 4) == 0) { // "Test only" was clicked!
+      for (int i = 0; i < (sizeof(u32sets) / sizeof(struct u32set_s)); i++) {
+        if (u32sets[i].supportstest == 0) { // does not support test setting.
+          continue;
+        }
+        if (httpd_query_key_value(postcontent, u32sets[i].name, tmp1, sizeof(tmp1)) != ESP_OK) {
+          continue; // No such setting in submitted values.
+        }
+        long newv = strtol(tmp1, NULL, 10);
+        if ((newv < u32sets[i].minval) || (newv > u32sets[i].maxval)) {
+          sprintf(myresponse, "ERROR: value %lu for '%s' is outside permitted range [%"PRIu32"...%"PRIu32"]",
+                              newv, u32sets[i].name, u32sets[i].minval, u32sets[i].maxval);
+          httpd_resp_send(req, myresponse, HTTPD_RESP_USE_STRLEN);
+          return ESP_OK;
+        }
+        /* Value seems valid, apply it */
+        if (strcmp(u32sets[i].name, "led0_bri") == 0) {
+          settings.ledn_bri[0] = newv;
+        } else if (strcmp(u32sets[i].name, "led1_bri") == 0) {
+          settings.ledn_bri[1] = newv;
+        } else if (strcmp(u32sets[i].name, "led2_bri") == 0) {
+          settings.ledn_bri[2] = newv;
+        } else {
+          sprintf(myresponse, "Failed to apply setting '%s'", u32sets[i].name);
+          httpd_resp_send(req, myresponse, HTTPD_RESP_USE_STRLEN);
+          return ESP_OK;
+        }
+        strcat(myresponse, "Applied setting '");
+        strcat(myresponse, u32sets[i].name);
+        strcat(myresponse, "'<br>");
+        ledoverride = 3;
+      }
+    }
+    httpd_resp_send(req, myresponse, HTTPD_RESP_USE_STRLEN);
+    return ESP_OK;
+  }
   nvs_handle_t nvshandle;
   esp_err_t e = nvs_open("settings", NVS_READWRITE, &nvshandle);
   if (e != ESP_OK) {
