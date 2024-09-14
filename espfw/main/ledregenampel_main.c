@@ -73,11 +73,18 @@ void app_main(void)
 
     i2c_port_init();
     sh1122_init();
+    leds_init();
+
     db = di_newdispbuf();
     di_drawtext(db, 10, 30, &font_FreeSansBold21pt, 0xff, "Foxis LED-Regen-Ampel");
+    if (1) {
+      uint8_t tmps[100];
+      const esp_app_desc_t * appd = esp_app_get_description();
+      sprintf(tmps, "FW-ver %s",
+              appd->version);
+      di_drawtext(db, 10, 60, &font_FreeSansBold21pt, 0xff, tmps);
+    }
     sh1122_display(db);
-
-    leds_init();
 
     /* Unfortunately, time does not (always) revert to 0 on an
      * esp_restart. So we set all timestamps to "now" instead.
@@ -108,6 +115,21 @@ void app_main(void)
     /* Start up the webserver */
     webserver_start();
 
+    /* Now shortly flash all 3 lights at a very low
+     * brightness so the user can see they are working */
+    for (uint8_t bl = 0; bl <= 3; bl++) {
+      for (uint8_t i = 0; i <= 2; i++) {
+        if (i == bl) {
+          leds_setbrightness(i, 20);
+        } else {
+          leds_setbrightness(i, 0);
+        }
+      }
+      if (bl < 3) { /* no sleep on the last iteration that turns all off */
+        sleep_ms(1000);
+      }
+    }
+
     /* Wait for up to 7 more seconds to connect to WiFi and get an IP */
     EventBits_t eb = xEventGroupWaitBits(network_event_group,
                                          NETWORK_CONNECTED_BIT,
@@ -117,6 +139,20 @@ void app_main(void)
       ESP_LOGI("main.c", "Successfully connected to network.");
     } else {
       ESP_LOGW("main.c", "Warning: Could not connect to WiFi. This is probably not good.");
+    }
+    /* Do we have IPv4 info? Then print that on the display. */
+    if (1) {
+      di_drawrect(db, 0, 32, 255, 63, -1, 0x00);
+      esp_netif_ip_info_t ip_info;
+      if (esp_netif_get_ip_info(mainnetif, &ip_info) == ESP_OK) {
+        uint8_t tmps[100];
+        sprintf(tmps, "IPv4: " IPSTR "/" IPSTR,
+                     IP2STR(&ip_info.ip), IP2STR(&ip_info.netmask));
+        di_drawtext(db, 10, 60, &font_FreeSansBold21pt, 0xff, tmps);
+      } else {
+        di_drawtext(db, 10, 60, &font_FreeSansBold21pt, 0xff, "No IPv4 (yet) :(");
+      }
+      sh1122_display(db);
     }
 
     /* Now loop, polling regenampel.de every 5 minutes or so. */
